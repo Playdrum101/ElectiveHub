@@ -1,0 +1,88 @@
+// This is your full-scope Prisma schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password_hash String
+  name          String
+  reg_number    String?        @unique
+  department    String?
+  role          UserRole       @default(STUDENT)
+  registrations Registration[]
+  
+  @@map("users")
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+model Course {
+  id                String         @id @default(uuid())
+  course_code       String         @unique
+  title             String
+  description       String?
+  department        String?
+  professor         String?
+  total_seats       Int
+  remaining_seats   Int
+  waitlist_capacity Int
+  waitlist_current  Int             @default(0)
+  credits           Int
+  schedules         Schedule[]
+  registrations     Registration[]
+  
+  @@map("courses")
+}
+
+// Separate table for schedules, as a course can have multiple
+model Schedule {
+  id         String     @id @default(uuid())
+  day_of_week DayOfWeek
+  start_time String     // e.g., "10:00"
+  end_time   String     // e.g., "11:00"
+  course     Course     @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  course_id  String
+  
+  @@map("schedules")
+}
+
+model Registration {
+  id                      String             @id @default(uuid())
+  registered_at           DateTime           @default(now())
+  status                  RegistrationStatus
+  confirmation_expires_at DateTime?          // For waitlist timer
+  user                    User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id                 String
+  course                  Course             @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  course_id               String
+  
+  @@unique([user_id, course_id])
+  @@map("registrations")
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  WAITLISTED
+  PENDING_CONFIRMATION // The user has 24h to accept
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+

@@ -1,0 +1,186 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import toast from "react-hot-toast";
+
+interface Course {
+  id: string;
+  course_code: string;
+  title: string;
+  description: string | null;
+  department: string | null;
+  professor: string | null;
+  total_seats: number;
+  remaining_seats: number;
+  waitlist_capacity: number;
+  waitlist_current: number;
+  credits: number;
+  schedules: Array<{
+    day_of_week: string;
+    start_time: string;
+    end_time: string;
+  }>;
+}
+
+export default function Catalog() {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const res = await fetch("/api/courses");
+      const data = await res.json();
+      setCourses(data.courses || []);
+    } catch (error) {
+      toast.error("Failed to load courses");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch =
+      course.title.toLowerCase().includes(search.toLowerCase()) ||
+      course.course_code.toLowerCase().includes(search.toLowerCase());
+    const matchesFilter =
+      filter === "all" || (filter === "available" && course.remaining_seats > 0);
+    return matchesSearch && matchesFilter;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-2xl font-semibold text-gray-600">Loading courses...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-4xl font-bold text-gray-900">Course Catalog</h1>
+            <Link
+              href="/"
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition"
+            >
+              ← Back to Home
+            </Link>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
+            <input
+              type="text"
+              placeholder="Search courses..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Courses</option>
+              <option value="available">Available Only</option>
+            </select>
+          </div>
+
+          <p className="text-gray-600">
+            Showing {filteredCourses.length} of {courses.length} courses
+          </p>
+        </div>
+
+        {/* Course Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCourses.map((course) => (
+            <div
+              key={course.id}
+              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition"
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                    {course.course_code}
+                  </span>
+                  <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+                    {course.credits} Credits
+                  </span>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{course.title}</h3>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  {course.description || "No description available"}
+                </p>
+
+                <div className="space-y-2 text-sm text-gray-600 mb-4">
+                  {course.professor && (
+                    <p>
+                      <span className="font-medium">Professor:</span> {course.professor}
+                    </p>
+                  )}
+                  {course.department && (
+                    <p>
+                      <span className="font-medium">Department:</span> {course.department}
+                    </p>
+                  )}
+                </div>
+
+                {/* Schedule */}
+                {course.schedules && course.schedules.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-1">Schedule:</p>
+                    <div className="space-y-1">
+                      {course.schedules.map((schedule, idx) => (
+                        <p key={idx} className="text-xs text-gray-600">
+                          {schedule.day_of_week} {schedule.start_time}-{schedule.end_time}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Seats Info */}
+                <div className="flex justify-between items-center pt-4 border-t">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">
+                      Seats: {course.remaining_seats} / {course.total_seats}
+                    </p>
+                    {course.waitlist_current > 0 && (
+                      <p className="text-xs text-orange-600">
+                        Waitlist: {course.waitlist_current}
+                      </p>
+                    )}
+                  </div>
+                  <Link
+                    href={`/register-course/${course.id}`}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
+                  >
+                    View Details
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {filteredCourses.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">No courses found</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
