@@ -154,7 +154,7 @@ export default function Catalog() {
                 <div className="flex justify-between items-center pt-4 border-t">
                   <div>
                     <p className="text-sm font-medium text-gray-700">
-                      Seats: {course.remaining_seats} / {course.total_seats}
+                      Seats: <span className={course.remaining_seats > 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>{course.remaining_seats}</span> / {course.total_seats}
                     </p>
                     {course.waitlist_current > 0 && (
                       <p className="text-xs text-orange-600">
@@ -166,7 +166,7 @@ export default function Catalog() {
                     href={`/register-course/${course.id}`}
                     className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
                   >
-                    View Details
+                    {course.remaining_seats > 0 ? "Enroll Now" : "Join Waitlist"}
                   </Link>
                 </div>
               </div>
