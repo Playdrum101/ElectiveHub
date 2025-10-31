@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthUser } from "@/lib/middleware";
+import { getIO } from "@/lib/socket";
 
 export async function POST(
   req: NextRequest,
@@ -104,9 +105,7 @@ export async function POST(
     }
 
     // No conflicts - proceed with registration
-    // Use transaction to ensure atomicity
     const result = await prisma.$transaction(async (tx) => {
-      // Lock the course to prevent race conditions
       const courseLock = await tx.course.findUnique({
         where: { id: params.courseId },
       });
@@ -115,9 +114,7 @@ export async function POST(
         throw new Error("Course not found");
       }
 
-      // Check remaining seats one more time (inside transaction)
       if (courseLock.remaining_seats > 0) {
-        // Decrement remaining seats and create registration
         await tx.course.update({
           where: { id: params.courseId },
           data: {
@@ -135,9 +132,9 @@ export async function POST(
           },
         });
 
-        return { registration, waitlisted: false };
+        const updated = await tx.course.findUnique({ where: { id: params.courseId } });
+        return { registration, waitlisted: false, updated };
       } else if (courseLock.waitlist_current < courseLock.waitlist_capacity) {
-        // Join waitlist
         await tx.course.update({
           where: { id: params.courseId },
           data: {
@@ -155,11 +152,22 @@ export async function POST(
           },
         });
 
-        return { registration, waitlisted: true };
+        const updated = await tx.course.findUnique({ where: { id: params.courseId } });
+        return { registration, waitlisted: true, updated };
       } else {
         throw new Error("Course and waitlist are both full");
       }
     });
+
+    // Emit real-time seat update
+    const io = getIO();
+    if (io && result.updated) {
+      io.emit("seat-update", {
+        courseId: params.courseId,
+        newSeatCount: result.updated.remaining_seats,
+        newWaitlistCount: result.updated.waitlist_current,
+      });
+    }
 
     return NextResponse.json({
       message: result.waitlisted

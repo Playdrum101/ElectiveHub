@@ -22,9 +22,11 @@ async function main() {
 
   console.log("Created admin:", admin.email, "password: admin123");
 
-  // Create some sample courses
-  const course1 = await prisma.course.create({
-    data: {
+  // Create some sample courses (using upsert to avoid duplicates)
+  const course1 = await prisma.course.upsert({
+    where: { course_code: "CS101" },
+    update: {},
+    create: {
       course_code: "CS101",
       title: "Introduction to Computer Science",
       description: "Learn the fundamentals of programming and algorithms",
@@ -51,8 +53,10 @@ async function main() {
     },
   });
 
-  const course2 = await prisma.course.create({
-    data: {
+  const course2 = await prisma.course.upsert({
+    where: { course_code: "CS201" },
+    update: {},
+    create: {
       course_code: "CS201",
       title: "Data Structures and Algorithms",
       description: "Advanced data structures and algorithmic problem solving",
@@ -79,7 +83,7 @@ async function main() {
     },
   });
 
-  const course3 = await prisma.course.create({
+  const course3 = await prisma.course.upsert({
     data: {
       course_code: "MATH101",
       title: "Calculus I",

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { getClientSocket } from "@/lib/socket-client";
 
 interface Course {
   id: string;
@@ -31,6 +32,31 @@ export default function Catalog() {
 
   useEffect(() => {
     fetchCourses();
+
+    // Socket.IO live updates
+    const socket = getClientSocket();
+    const onSeatUpdate = (payload: {
+      courseId: string;
+      newSeatCount: number;
+      newWaitlistCount: number;
+    }) => {
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === payload.courseId
+            ? {
+                ...c,
+                remaining_seats: payload.newSeatCount,
+                waitlist_current: payload.newWaitlistCount,
+              }
+            : c
+        )
+      );
+    };
+
+    socket.on("seat-update", onSeatUpdate);
+    return () => {
+      socket.off("seat-update", onSeatUpdate);
+    };
   }, []);
 
   const fetchCourses = async () => {
