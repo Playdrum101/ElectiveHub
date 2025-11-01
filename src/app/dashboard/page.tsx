@@ -33,6 +33,7 @@ export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
   const [registered, setRegistered] = useState<Registration[]>([]);
   const [waitlisted, setWaitlisted] = useState<Registration[]>([]);
+  const [pending, setPending] = useState<Registration[]>([]);
   const [totalCredits, setTotalCredits] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -74,6 +75,7 @@ export default function StudentDashboard() {
       if (res.ok) {
         setRegistered(data.registrations.registered || []);
         setWaitlisted(data.registrations.waitlisted || []);
+        setPending(data.registrations.pending || []);
         setTotalCredits(data.totalCredits || 0);
       }
     } catch (error) {
@@ -250,13 +252,80 @@ export default function StudentDashboard() {
           </div>
         </div>
 
+        {/* Pending Confirmation Courses */}
+        {pending.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-lg mb-6 border border-gray-100">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-900">
+                ⚠️ Action Required ({pending.length})
+              </h2>
+              <p className="text-gray-600 mt-1">Confirm your enrollment within 24 hours</p>
+            </div>
+
+            <div className="p-6">
+              <div className="space-y-4">
+                {pending.map((reg) => {
+                  const expiresAt = reg.confirmation_expires_at 
+                    ? new Date(reg.confirmation_expires_at)
+                    : null;
+                  const hoursLeft = expiresAt 
+                    ? Math.max(0, Math.floor((expiresAt.getTime() - new Date().getTime()) / (1000 * 60 * 60)))
+                    : 0;
+
+                  return (
+                    <div
+                      key={reg.id}
+                      className="border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-6"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded">
+                              {reg.course.course_code}
+                            </span>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {reg.course.title}
+                            </h3>
+                            <span className="text-sm text-gray-600">
+                              {reg.course.credits} Credits
+                            </span>
+                          </div>
+                          <p className="text-sm font-semibold text-yellow-800 mb-2">
+                            🎉 A spot opened up! You have {hoursLeft} hours to confirm.
+                          </p>
+                          <p className="text-xs text-gray-600 mb-3">
+                            Check your email for the confirmation link, or click below to accept.
+                          </p>
+                          <a
+                            href={`/waitlist/accept/${reg.id}`}
+                            className="inline-block px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white text-sm font-semibold rounded-xl transition-all shadow-md hover:shadow-lg"
+                          >
+                            Accept Spot Now
+                          </a>
+                        </div>
+                        <button
+                          onClick={() => handleDrop(reg.id)}
+                          className="ml-4 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 text-sm rounded-lg transition font-medium"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Waitlisted Courses */}
         {waitlisted.length > 0 && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b">
-              <h2 className="text-2xl font-semibold text-gray-900">
+          <div className="bg-white rounded-2xl shadow-lg mb-6 border border-gray-100">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-3xl font-bold text-gray-900">
                 Waitlisted Courses ({waitlisted.length})
               </h2>
+              <p className="text-gray-600 mt-1">You'll be notified when a spot becomes available</p>
             </div>
 
             <div className="p-6">
@@ -285,7 +354,7 @@ export default function StudentDashboard() {
                       </div>
                       <button
                         onClick={() => handleDrop(reg.id)}
-                        className="ml-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition"
+                        className="ml-4 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 text-sm rounded-lg transition font-medium"
                       >
                         Remove from Waitlist
                       </button>

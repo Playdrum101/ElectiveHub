@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/waitlist/expire",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
+
