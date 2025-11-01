@@ -125,30 +125,30 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="bg-white shadow-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-1">
                 My Dashboard
               </h1>
-              <p className="text-gray-600">Welcome, {user?.name}</p>
+              <p className="text-gray-600">Welcome back, {user?.name}</p>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-gray-700 font-medium">
-                {totalCredits} Credits Enrolled
-              </span>
+              <div className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl shadow-md font-semibold">
+                {totalCredits} Credits
+              </div>
               <Link
                 href="/catalog"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-medium"
               >
                 Browse Courses
               </Link>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                className="px-5 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-all font-medium border border-red-200"
               >
                 Logout
               </button>
@@ -160,11 +160,12 @@ export default function StudentDashboard() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Enrolled Courses */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="p-6 border-b">
-            <h2 className="text-2xl font-semibold text-gray-900">
+        <div className="bg-white rounded-2xl shadow-lg mb-6 border border-gray-100">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-3xl font-bold text-gray-900">
               Enrolled Courses ({registered.length})
             </h2>
+            <p className="text-gray-600 mt-1">Manage your course registrations</p>
           </div>
 
           <div className="p-6">
@@ -183,7 +184,7 @@ export default function StudentDashboard() {
                 {registered.map((reg) => (
                   <div
                     key={reg.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition"
+                    className="border-2 border-gray-200 rounded-xl p-6 hover:border-blue-400 hover:shadow-md transition-all bg-gradient-to-br from-white to-blue-50/30"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -237,7 +238,7 @@ export default function StudentDashboard() {
 
                       <button
                         onClick={() => handleDrop(reg.id)}
-                        className="ml-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition"
+                        className="ml-4 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-sm font-semibold rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                       >
                         Drop Course
                       </button>

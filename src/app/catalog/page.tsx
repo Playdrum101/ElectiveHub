@@ -89,33 +89,41 @@ export default function Catalog() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-4xl font-bold text-gray-900">Course Catalog</h1>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                Course Catalog
+              </h1>
+              <p className="text-gray-600">Browse and enroll in available courses</p>
+            </div>
             <Link
               href="/"
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition"
+              className="px-5 py-2.5 bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-xl transition-all shadow-sm hover:shadow-md font-medium"
             >
-              ← Back to Home
+              ← Home
             </Link>
           </div>
 
           {/* Search and Filter */}
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
-            <input
-              type="text"
-              placeholder="Search courses..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="🔍 Search courses..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white shadow-sm"
+              />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+            </div>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white shadow-sm font-medium"
             >
               <option value="all">All Courses</option>
               <option value="available">Available Only</option>
@@ -132,7 +140,7 @@ export default function Catalog() {
           {filteredCourses.map((course) => (
             <div
               key={course.id}
-              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition"
+              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 border border-gray-100 transform hover:-translate-y-2"
             >
               <div className="p-6">
                 <div className="flex justify-between items-start mb-2">
@@ -190,7 +198,11 @@ export default function Catalog() {
                   </div>
                   <Link
                     href={`/register-course/${course.id}`}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
+                    className={`text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 ${
+                      course.remaining_seats > 0
+                        ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                        : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                    }`}
                   >
                     {course.remaining_seats > 0 ? "Enroll Now" : "Join Waitlist"}
                   </Link>

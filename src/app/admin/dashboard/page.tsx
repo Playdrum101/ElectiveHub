@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -28,15 +29,55 @@ export default function AdminDashboard() {
         return;
       }
 
-      // Fetch courses
-      fetch("/api/admin/courses")
-        .then((res) => res.json())
-        .then((data) => setCourses(data.courses || []))
-        .finally(() => setLoading(false));
+      fetchCourses();
     } catch (error) {
       router.push("/login/admin");
     }
   }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/admin/courses", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setCourses(data.courses || []);
+    } catch (error) {
+      toast.error("Failed to load courses");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (courseId: string, courseCode: string) => {
+    if (!confirm(`Are you sure you want to delete ${courseCode}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/admin/courses/${courseId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Course deleted successfully");
+        fetchCourses();
+      } else {
+        toast.error(data.error || "Failed to delete course");
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -53,17 +94,25 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-100">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="bg-white shadow-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <div className="flex justify-between items-center py-6">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-1">
+                Admin Dashboard
+              </h1>
+              <p className="text-gray-600">Manage courses and registrations</p>
+            </div>
             <div className="flex items-center gap-4">
-              <span className="text-gray-700">Welcome, {user?.name}</span>
+              <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-lg">
+                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <span className="text-sm text-gray-700 font-medium">{user?.name}</span>
+              </div>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                className="px-5 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl transition-all font-medium border border-red-200"
               >
                 Logout
               </button>
@@ -74,12 +123,15 @@ export default function AdminDashboard() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold text-gray-900">Courses</h2>
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Courses</h2>
+              <p className="text-gray-600 mt-1">{courses.length} total courses</p>
+            </div>
             <Link
               href="/admin/courses/create"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-medium"
             >
               + Create Course
             </Link>
@@ -100,6 +152,9 @@ export default function AdminDashboard() {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Credits
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Schedule
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Actions
@@ -124,9 +179,37 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-gray-900">{course.credits}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">Edit</button>
-                      <button className="text-red-600 hover:text-red-900">Delete</button>
+                    <td className="px-6 py-4">
+                      {course.schedules && course.schedules.length > 0 ? (
+                        <div className="text-xs text-gray-600 space-y-1">
+                          {course.schedules.slice(0, 2).map((s: any, idx: number) => (
+                            <div key={idx}>
+                              {s.day_of_week.slice(0, 3)} {s.start_time}-{s.end_time}
+                            </div>
+                          ))}
+                          {course.schedules.length > 2 && (
+                            <div className="text-gray-400">+{course.schedules.length - 2} more</div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">No schedule</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex gap-3">
+                        <Link
+                          href={`/admin/courses/edit/${course.id}`}
+                          className="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition font-medium"
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(course.id, course.course_code)}
+                          className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -135,7 +218,15 @@ export default function AdminDashboard() {
           </div>
 
           {courses.length === 0 && (
-            <p className="text-center text-gray-500 py-8">No courses yet. Create your first course!</p>
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg mb-4">No courses yet.</p>
+              <Link
+                href="/admin/courses/create"
+                className="text-indigo-600 hover:text-indigo-800 font-medium"
+              >
+                Create your first course →
+              </Link>
+            </div>
           )}
         </div>
       </div>
